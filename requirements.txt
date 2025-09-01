@@ -1,0 +1,19 @@
+flask
+pandas
+openpyxl
+faiss-cpu
+sentence-transformers
+transformers
+torch
+python-dotenv
+requests
+langchain
+langchain_community
+fastapi
+bitsandbytes  # New: for quantization
+scipy  # New: for deduplication clustering
+accelerate  # New: for optimized model loading
+openai
+pandas
+dotenv
+hdbcli

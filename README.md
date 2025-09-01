@@ -15,7 +15,7 @@ Built in SAP Business Application Studio (BAS), no paid SAP or external cloud ne
 
 2. Run the app:
     ```
-    streamlit run app.py
+    flask run
     ```
 
 3. Paste your Hugging Face API token in the input field to use the app.

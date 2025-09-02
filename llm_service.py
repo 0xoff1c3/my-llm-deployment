@@ -67,32 +67,43 @@ def refine_query(query: str) -> str:
     logging.info(f"Refined query: {refined}")
     return refined
 
-def get_answer(query: str, docs: list[str]) -> str:
+def get_answer(query: str, docs: list[str]) -> dict:
     """Generate concise answer from retrieved logs"""
     context = "\n".join(docs[:6]) if docs else ""
     prompt = (
-        "You are an expert SAP log analyst.\n"
-        "Task: Analyze the provided logs and answer the question in up to 5 unique sentences. "
-        "Use bullet points for key insights. Include specific metrics (e.g., MAPE) or IDs (e.g., AB663, 13094) if available. "
-        "Avoid repetition and generic statements. Summarize findings in 1-2 sentences.\n"
+        "You are a seasoned SAP log analyst.\n"
+        "Objective:\n"
+        f"Analyze the provided log lines and answer the query: {query}\n"
+        "Response Format:\n"
+        "- Line 1: Direct, concise answer to the query.\n"
+        "- Next up to 5 bullet points: Evidence-based reasoning using specific log details.\n"
+        "Instructions:\n"
+        "- Use only the provided log lines—no assumptions or external knowledge.\n"
+        "- Each bullet must be distinct, concrete, and insightful.\n"
+        "- Keep total response ≤ 6 lines.\n"
     )
     if context:
         prompt += f"Logs:\n{context}\n\n"
     else:
         prompt += "No logs found. Use general knowledge.\n\n"
     prompt += f"Question: {query}\nAnswer:"
+
     try:
-        answer = call_hf_api(prompt, max_tokens=100)
-        sentences = re.split(r'(?<=[.!?])\s+', answer)
-        unique_sentences = []
-        for s in sentences:
-            if s and s not in unique_sentences and len(unique_sentences) < 5:
-                unique_sentences.append(s)
-        answer = ' '.join(unique_sentences)
-        logging.info(f"Generated answer: {answer}")
-        return answer
+        raw_answer = call_hf_api(prompt, max_tokens=150)
+
+        # Split into lines
+        lines = [line.strip("•- ") for line in raw_answer.splitlines() if line.strip()]
+        if not lines:
+            return {"main": "No answer generated.", "bullets": []}
+
+        main_answer = lines[0]  # first line = concise answer
+        bullets = lines[1:] if len(lines) > 1 else []
+
+        logging.info(f"Generated structured answer: {main_answer}, bullets: {bullets}")
+        return {"main": main_answer, "bullets": bullets}
+
     except Exception as e:
         logging.error(f"Error answering: {repr(e)}")
-        return f"[Error answering: {repr(e)}]"
+        return {"main": f"[Error answering: {repr(e)}]", "bullets": []}
     finally:
         gc.collect()

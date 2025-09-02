@@ -98,33 +98,17 @@ else:
     faiss.write_index(index, index_path)
     logging.info("Created and cached FAISS index")
 
-# def retrieve_documents(query: str, top_k: int = 6, sim_threshold: float = 0.5):
-#     query_vec = embedder.encode([query], convert_to_numpy=True, normalize_embeddings=True)
-#     sims, indices = index.search(query_vec, top_k) # pyright: ignore [reportCallIssue]
-#     candidate_docs = [(documents[i], sims[0][j]) for j, i in enumerate(indices[0]) if sims[0][j] >= sim_threshold]
-    
-#     # Simple deduplication
-#     unique_docs = []
-#     for doc, sim in candidate_docs:
-#         if not unique_docs or all(SequenceMatcher(None, doc, u[0]).ratio() < 0.8 for u in unique_docs):
-#             unique_docs.append((doc, sim))
-#     unique_docs = unique_docs[:top_k]
-    
-#     retrieved = [doc[0] for doc in unique_docs]
-#     logging.info(f"Retrieved {len(retrieved)} docs for query '{query}' (post-threshold and dedup)")
-#     return retrieved
-
 def retrieve_documents(query: str, top_k: int = 6, sim_threshold: float = 0.5,
                        from_date: str = "", to_date: str = ""):
     conn = connect_db()
     cursor = conn.cursor()
     table_name = f'"{HANA_SCHEMA}"."IBP_APP_LOGS_TBL"' if HANA_SCHEMA else "IBP_APP_LOGS_TBL"
 
-    # Build WHERE clause with optional dates
+    # ✅ Build WHERE clause dynamically only if dates provided
     where_clauses = []
-    if from_date:
+    if from_date.strip():
         where_clauses.append(f"DATE_TIME >= '{from_date} 00:00:00'")
-    if to_date:
+    if to_date.strip():
         where_clauses.append(f"DATE_TIME <= '{to_date} 23:59:59'")
     where_sql = " WHERE " + " AND ".join(where_clauses) if where_clauses else ""
 
@@ -134,6 +118,7 @@ def retrieve_documents(query: str, top_k: int = 6, sim_threshold: float = 0.5,
         FROM {table_name}
         {where_sql}
     """
+
     try:
         cursor.execute(query_sql)
         rows = cursor.fetchall()
@@ -141,33 +126,35 @@ def retrieve_documents(query: str, top_k: int = 6, sim_threshold: float = 0.5,
         cursor.close()
         conn.close()
 
-    # reuse your embedding + FAISS search logic
+    # ✅ Build docs list
     docs = []
     if rows:
         cols = ['PLANNING_AREA','CUSTOMER_ID','PRODUCT_ID','FORECAST_MODEL',
                 'STEP','SEVERITY','MESSAGE','DATE_TIME']
-        df = pd.DataFrame(rows, columns=cols) # pyright: ignore[reportArgumentType]
+        df = pd.DataFrame(rows, columns=cols) # type: ignore
         for _, row in df.iterrows():
             vals = [str(v) for v in row.values if pd.notna(v)]
             if vals:
                 docs.append(" | ".join(vals))
 
     if not docs:
-        logging.warning("No documents in given date range")
+        logging.warning("No documents found for given filters")
         return []
 
+    # ✅ Vectorize query and documents
     query_vec = embedder.encode([query], convert_to_numpy=True, normalize_embeddings=True)
     doc_embeddings = embedder.encode(docs, convert_to_numpy=True, normalize_embeddings=True)
+
     dimension = doc_embeddings.shape[1]
     index = faiss.IndexFlatIP(dimension)
-    index.add(doc_embeddings) # pyright: ignore [reportCallIssue]
-    sims, indices = index.search(query_vec, top_k) # pyright: ignore [reportCallIssue]
+    index.add(doc_embeddings)  # type: ignore
+    sims, indices = index.search(query_vec, top_k)  # type: ignore
 
     candidate_docs = [(docs[i], sims[0][j]) for j, i in enumerate(indices[0]) if sims[0][j] >= sim_threshold]
 
-    # Deduplicate
     unique_docs = []
     for doc, sim in candidate_docs:
         if not unique_docs or all(SequenceMatcher(None, doc, u[0]).ratio() < 0.8 for u in unique_docs):
             unique_docs.append((doc, sim))
-    return [doc for doc, _ in unique_docs]
+
+    return [doc for doc, _ in candidate_docs]

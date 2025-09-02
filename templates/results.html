@@ -92,7 +92,14 @@
 
         <h3>Final Answer:</h3>
         <div class="final-answer">
-            <p>{{ answer }}</p>
+            <p><strong>{{ answer.main }}</strong></p>
+            {% if answer.bullets %}
+            <div>
+                {% for point in answer.bullets %}
+                    <p>{{ point }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
         </div>
 
         <a href="/">Search Again</a>

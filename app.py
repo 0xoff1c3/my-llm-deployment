@@ -10,10 +10,14 @@ app = Flask(__name__)
 def index():
     if request.method == "POST":
         user_query = request.form["query"].strip()
+        from_date = request.form.get("from_date")
+        to_date = request.form.get("to_date")
+
         if not user_query or len(user_query) > 500:
             return render_template("index.html", error="Query must be non-empty and under 500 characters.")
+
         refined_query = refine_query(user_query)
-        docs = retrieve_documents(refined_query, top_k=12)
+        docs = retrieve_documents(refined_query, top_k=12, from_date=from_date, to_date=to_date) # pyright: ignore[reportArgumentType]
         answer = get_answer(user_query, docs)
         gc.collect()
         return render_template(
@@ -26,4 +30,4 @@ def index():
     return render_template("index.html")
 
 if __name__ == "__main__":
-    app.run(debug=True, port=8000)
+    app.run(host="0.0.0.0", port=5000, debug=True)

@@ -14,6 +14,5 @@ bitsandbytes  # New: for quantization
 scipy  # New: for deduplication clustering
 accelerate  # New: for optimized model loading
 openai
-pandas
 dotenv
 hdbcli

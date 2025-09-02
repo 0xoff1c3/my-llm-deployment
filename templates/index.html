@@ -1,87 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Semantic Search</title>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f7fa;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Semantic Search</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f7fa;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
 
-        .search-container {
-            background-color: #ffffff;
-            padding: 40px 50px;
-            border-radius: 12px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-            text-align: center;
-            width: 90%;
-            max-width: 600px;
-        }
+    .search-container {
+      background-color: #ffffff;
+      padding: 40px 50px;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 90%;
+      max-width: 650px;
+    }
 
-        h1 {
-            color: #333;
-            margin-bottom: 30px;
-        }
+    h1 {
+      color: #333;
+      margin-bottom: 30px;
+    }
 
-        input[type="text"] {
-            width: 80%;
-            padding: 12px 15px;
-            font-size: 16px;
-            border: 2px solid #ddd;
-            border-radius: 8px;
-            outline: none;
-            transition: border 0.3s ease;
-        }
+    .form-group {
+      margin-bottom: 20px;
+      text-align: left;
+    }
 
-        input[type="text"]:focus {
-            border-color: #4CAF50;
-        }
+    label {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 8px;
+      color: #444;
+    }
 
-        button {
-            padding: 12px 25px;
-            font-size: 16px;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-left: 10px;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-        }
+    input[type="text"], input[type="date"] {
+      width: 100%;
+      padding: 12px 15px;
+      font-size: 16px;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      outline: none;
+      transition: border 0.3s ease;
+      box-sizing: border-box;
+    }
 
-        button:hover {
-            background-color: #45a049;
-            transform: translateY(-2px);
-        }
+    input[type="text"]:focus, input[type="date"]:focus {
+      border-color: #4CAF50;
+    }
 
-        @media (max-width: 500px) {
-            input[type="text"] {
-                width: 100%;
-                margin-bottom: 15px;
-            }
+    button {
+      padding: 12px 25px;
+      font-size: 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
 
-            button {
-                width: 100%;
-                margin-left: 0;
-            }
-        }
-    </style>
+    button:hover {
+      background-color: #45a049;
+      transform: translateY(-2px);
+    }
+
+    @media (max-width: 500px) {
+      input[type="text"], input[type="date"] {
+        width: 100%;
+        margin-bottom: 15px;
+      }
+
+      button {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="search-container">
-        <h1>Semantic Search over Excel Data</h1>
-        <form method="POST">
-            <input type="text" name="query" placeholder="Enter your query" required>
-            <button type="submit">Search</button>
-        </form>
-    </div>
+  <div class="search-container">
+    <h1>Semantic Search over Excel Data</h1>
+    <form method="POST">
+      
+      <div class="form-group">
+        <label for="query">Query</label>
+        <input type="text" id="query" name="query" placeholder="Enter your query" required>
+      </div>
+
+      <div class="form-group">
+        <label for="from_date">From Date</label>
+        <input type="date" id="from_date" name="from_date" required>
+      </div>
+
+      <div class="form-group">
+        <label for="to_date">To Date</label>
+        <input type="date" id="to_date" name="to_date" required>
+      </div>
+
+      <button type="submit">Search</button>
+    </form>
+  </div>
 </body>
 </html>

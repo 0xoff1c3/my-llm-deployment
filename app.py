@@ -1,4 +1,3 @@
-# app.py
 from flask import Flask, render_template, request
 from retriever import retrieve_documents
 from llm_service import refine_query, get_answer

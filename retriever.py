@@ -98,13 +98,13 @@ else:
     faiss.write_index(index, index_path)
     logging.info("Created and cached FAISS index")
 
-def retrieve_documents(query: str, top_k: int = 6, sim_threshold: float = 0.5,
+def retrieve_documents(query: str, sim_threshold: float = 0.0,
                        from_date: str = "", to_date: str = ""):
     conn = connect_db()
     cursor = conn.cursor()
     table_name = f'"{HANA_SCHEMA}"."IBP_APP_LOGS_TBL"' if HANA_SCHEMA else "IBP_APP_LOGS_TBL"
 
-    # ✅ Build WHERE clause dynamically only if dates provided
+    # Build WHERE clause dynamically
     where_clauses = []
     if from_date.strip():
         where_clauses.append(f"DATE_TIME >= '{from_date} 00:00:00'")
@@ -126,35 +126,34 @@ def retrieve_documents(query: str, top_k: int = 6, sim_threshold: float = 0.5,
         cursor.close()
         conn.close()
 
-    # ✅ Build docs list
-    docs = []
-    if rows:
-        cols = ['PLANNING_AREA','CUSTOMER_ID','PRODUCT_ID','FORECAST_MODEL',
-                'STEP','SEVERITY','MESSAGE','DATE_TIME']
-        df = pd.DataFrame(rows, columns=cols) # type: ignore
-        for _, row in df.iterrows():
-            vals = [str(v) for v in row.values if pd.notna(v)]
-            if vals:
-                docs.append(" | ".join(vals))
-
-    if not docs:
+    if not rows:
         logging.warning("No documents found for given filters")
         return []
 
-    # ✅ Vectorize query and documents
+    # Build document list
+    docs = []
+    cols = ['PLANNING_AREA','CUSTOMER_ID','PRODUCT_ID','FORECAST_MODEL',
+            'STEP','SEVERITY','MESSAGE','DATE_TIME']
+    df = pd.DataFrame(rows, columns=cols) #type: ignore 
+    for _, row in df.iterrows():
+        vals = [str(v) for v in row.values if pd.notna(v)]
+        if vals:
+            docs.append(" | ".join(vals))
+
+    # Encode query and docs
     query_vec = embedder.encode([query], convert_to_numpy=True, normalize_embeddings=True)
     doc_embeddings = embedder.encode(docs, convert_to_numpy=True, normalize_embeddings=True)
 
     dimension = doc_embeddings.shape[1]
-    index = faiss.IndexFlatIP(dimension)
-    index.add(doc_embeddings)  # type: ignore
-    sims, indices = index.search(query_vec, top_k)  # type: ignore
+    temp_index = faiss.IndexFlatIP(dimension)
+    temp_index.add(doc_embeddings) #pyright: ignore [reportCallIssue]
 
+    # Retrieve all docs above similarity threshold
+    sims, indices = temp_index.search(query_vec, len(docs))  #type: ignore
     candidate_docs = [(docs[i], sims[0][j]) for j, i in enumerate(indices[0]) if sims[0][j] >= sim_threshold]
 
-    unique_docs = []
-    for doc, sim in candidate_docs:
-        if not unique_docs or all(SequenceMatcher(None, doc, u[0]).ratio() < 0.8 for u in unique_docs):
-            unique_docs.append((doc, sim))
+    # Sort by similarity descending
+    candidate_docs.sort(key=lambda x: x[1], reverse=True)
 
+    # Return all results; limit only when displaying
     return [doc for doc, _ in candidate_docs]

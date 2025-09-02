@@ -14,27 +14,7 @@ load_dotenv()
 HF_TOKEN = os.getenv("HF_TOKEN")
 if not HF_TOKEN:
     raise RuntimeError("HF_TOKEN not set. Please set your Hugging Face token.")
-
-# def call_hf_api(prompt: str, max_tokens: int = 100) -> str:
-#     """Call Hugging Face Inference API for Llama-3.1-8B-Instruct"""
-#     try:
-#         client = OpenAI(
-#             base_url="https://api-inference.huggingface.co/models/meta-llama/Llama-3.1-8B-Instruct",
-#             api_key=HF_TOKEN,
-#         )
-#         completion = client.chat.completions.create(
-#             model="meta-llama/Llama-3.1-8B-Instruct",
-#             messages=[{"role": "user", "content": prompt}],
-#             max_tokens=max_tokens
-#         )
-#         # Assuming 'completion' is the response object from the OpenAI API
-#         content = completion.choices[0].message.content if completion and completion.choices and completion.choices[0].message.content else ""
-#         return content.strip() 
-#     except Exception as e:
-#         logging.error(f"HF API error: {repr(e)}")
-#         return f"[Error in HF API: {repr(e)}]"
-#     finally:
-#         gc.collect()
+    
 def call_hf_api(prompt: str, max_tokens: int = 100) -> str:
     """Call Hugging Face Inference API for Llama-3.1-8B-Instruct"""
     try:

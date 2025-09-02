@@ -19,20 +19,19 @@ def index():
 
         docs = retrieve_documents(
             refined_query,
-            top_k=12,
             from_date=from_date if from_date else "",
             to_date=to_date if to_date else ""
         )
 
-        answer_data = get_answer(user_query, docs)
+        answer = get_answer(user_query, docs)
         gc.collect()
-
+        display_docs = docs[:12]
         return render_template(
             "results.html",
             query=user_query,
             refined_query=refined_query,
-            docs=docs,
-            answer=answer_data
+            docs=display_docs,
+            answer=answer
         )
 
     return render_template("index.html")
